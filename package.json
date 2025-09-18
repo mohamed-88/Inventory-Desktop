@@ -1,0 +1,61 @@
+{
+  "name": "ahmed-electric-inventory",
+  "version": "1.0.0",
+  "description": "Ahmed Electric - Offline Inventory System",
+  "main": "electron.js",
+  "homepage": "./",
+  "author": "Mohamed-88 (Ahmed Receipt)",
+  "license": "ISC",
+  "scripts": {
+    "start-client": "cd client && npm start",
+    "start-server": "node server/server.js",
+    "electron:dev": "wait-on http://localhost:3000 && electron .",
+    "dev": "concurrently -k \"npm run start-client\" \"npm run start-server\" \"npm run electron:dev\"",
+    "postinstall": "npm install --prefix client && npm install --prefix server",
+    "build": "npm run build:react && electron-builder",
+    "build:react": "npm run build --prefix client"
+  },
+  "dependencies": {
+    "electron-is-dev": "^3.0.1",
+    "electron-squirrel-startup": "^1.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron": "^28.2.4",
+    "electron-builder": "^24.9.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.ahmedelectric.inventory",
+    "productName": "Ahmed Electric Inventory",
+    "files": [
+      "electron.js",
+      "client/build/**/*",
+      "server/**/*",
+      "node_modules/electron-is-dev/**/*",
+      "node_modules/electron-squirrel-startup/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "server/config/inventory_dev.db",
+        "to": "inventory_dev.db"
+      }
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
