@@ -1,7 +1,7 @@
 // server/routes/Payment.js
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
+const { db } = require('../config/db');
 
 // GET: وەرگرتنا هەمی پارەدانێن موشتەریەکێ
 router.get('/', async (req, res) => {

@@ -1,7 +1,7 @@
 // server/routes/Customer.js
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
+const { db } = require('../config/db');
 
 // GET: وەرگرتنا هەمی موشتەریان
 router.get('/', async (req, res) => {

@@ -7,7 +7,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { Button, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
 
 const CustomerInvoiceList = () => {
-  const { customerId } = useParams(); // ناڤ گوهۆڕی بۆ روونکرنێ
+  const { customerId } = useParams();
   const [invoices, setInvoices] = useState([]);
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,11 +18,9 @@ const CustomerInvoiceList = () => {
       if (!customerId) return;
       setLoading(true);
       try {
-        // بتنێ داخوازا پسولان بکە، سێرڤەر دێ ناڤێ موشتەری ژی دگەل زڤرینیت
         const invoicesRes = await api.get(`/invoices?customerId=${customerId}`);
         
         if (invoicesRes.data.length > 0) {
-          // فرض دکەین سێرڤەر داتایێن موشتەری دگەل پسولا ئێکێ دزڤرینیت
           setCustomer(invoicesRes.data[0].customer); 
         }
         setInvoices(invoicesRes.data);
@@ -49,8 +47,6 @@ const CustomerInvoiceList = () => {
     pdf.save(`invoices_${customer?.name || 'customer'}.pdf`);
   };
 
-  // ... فەنکشنێن دی دشێن پاشی بهێنە راستڤەکرن ...
-
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
   }
@@ -63,22 +59,24 @@ const CustomerInvoiceList = () => {
         </Typography>
         <TableContainer component={Paper}>
           <Table>
+            {/* --- گوهورینا سەرەکی ل ڤێرەیە --- */}
             <TableHead>
               <TableRow>
-                <th>ژمارا پسولێ</th>
-                <th>بەروار</th>
-                <th>بهایێ گشتی</th>
-                <th>کردار</th>
+                {/* ل جهێ <th>, ئەم <TableCell> بکار دئینین */}
+                <TableCell>ژمارا پسولێ</TableCell>
+                <TableCell>بەروار</TableCell>
+                <TableCell>بهایێ گشتی</TableCell>
+                <TableCell>کردار</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
+              {/* دڤێت هیچ جهەکێ ڤالا دناڤبەرا TableBody و map دا نەبیت */}
               {invoices.map((inv) => (
-                <TableRow key={inv.id}> {/* _id هاتیە گوهۆڕین بۆ id */}
-                  <TableCell>{inv.id}</TableCell> {/* یان هەر 'field'ەکێ دی */}
+                <TableRow key={inv.id}>
+                  <TableCell>{inv.id}</TableCell>
                   <TableCell>{new Date(inv.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>${inv.total_amount?.toFixed(2)}</TableCell>
                   <TableCell>
-                    {/* لینک هاتیە راستڤەکرن */}
                     <Button component={RouterLink} to={`/invoice/${inv.id}`} sx={{ mr: 1 }}>
                       🖨️ Print
                     </Button>
@@ -87,6 +85,7 @@ const CustomerInvoiceList = () => {
                 </TableRow>
               ))}
             </TableBody>
+            {/* ------------------------------------ */}
           </Table>
         </TableContainer>
       </div>

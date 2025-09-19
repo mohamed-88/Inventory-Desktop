@@ -1,95 +1,100 @@
-// =================================================================
-//        کۆدێ نوو و سادەکری بۆ server/server.js
-// =================================================================
-
-// --- 1. داخوازکرنا پاکێجان ب شێوازێ ستاندارد ---
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+const db = require('./config/db'); // وەک بەراهیێ، بتنێ db بهێتە وەرگرتن
 
-// --- 2. گرێدان ب داتابەیسا SQLite ---
-const db = require('./config/db'); 
-
-// --- 3. ئامادەکرنا ئەپلیکەیشنێ Express ---
 const app = express();
 const PORT = 4000;
 
-
-// رێیێن (Routes) درست
+// Routes
 const customerRoutes = require('./routes/Customer');
 const itemRoutes = require('./routes/Item');
 const invoiceRoutes = require('./routes/Invoice');
 const paymentRoutes = require('./routes/Payment');
 
-
-// --- 4. رێیێن (Routes) ---
-// const productRoutes = require('./routes/productRoutes');
-// const saleRoutes = require('./routes/saleRoutes');
-// const purchaseRoutes = require('./routes/purchaseRoutes');
-// const userRoutes = require('./routes/userRoutes');
-
-// --- 5. Middleware ---
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- 6. کارپێکرنا سێرڤەری ---
-app.listen(PORT, () => {
-  console.log(`✅ سێرڤەرێ لۆکال کار دکەت لسەر http://localhost:${PORT}` );
-});
-
-
+// API Routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/payments', paymentRoutes);
 
-
-// --- 7. گرێدانا API Routes ---
-// app.use('/api/products', productRoutes);
-// app.use('/api/sales', saleRoutes);
-// app.use('/api/purchases', purchaseRoutes);
-// app.use('/api/users', userRoutes);
-
-// --- 8. پەیاما خەلەتیێ یا گشتی ---
+// پەیاما خەلەتیێ یا گشتی
 app.use((err, req, res, next) => {
   console.error('❌ کێشەیەکا نەچاوەڕێکری روودا:', err.stack);
   res.status(500).send('Tiştek xelet çû!');
 });
 
+// فەنکشنێ ئامادەکرنا داتابەیسێ ل ڤێرە دهێتە دروستکرن
+async function setupDatabase() {
+  console.log('Checking database schema...');
+  // 1. Customers
+  if (!(await db.schema.hasTable('customers'))) {
+    console.log('Creating "customers" table...');
+    await db.schema.createTable('customers', (table) => {
+      table.increments('id').primary();
+      table.string('bill_number').notNullable().unique();
+      table.string('name').notNullable();
+      table.string('email').unique();
+      table.string('phone');
+      table.string('address');
+      table.timestamps(true, true);
+    });
+  }
 
+  // 2. Invoices
+  if (!(await db.schema.hasTable('invoices'))) {
+    console.log('Creating "invoices" table...');
+    await db.schema.createTable('invoices', (table) => {
+      table.increments('id').primary();
+      table.string('bill_number').notNullable().unique();
+      table.decimal('total_amount').notNullable();
+      table.decimal('paid_amount').defaultTo(0);
+      table.integer('customer_id').unsigned().notNullable().references('id').inTable('customers').onDelete('CASCADE');
+      table.timestamps(true, true);
+    });
+  }
 
+  // 3. Items
+  if (!(await db.schema.hasTable('items'))) {
+    console.log('Creating "items" table...');
+    await db.schema.createTable('items', (table) => {
+      table.increments('id').primary();
+      table.string('name').notNullable();
+      table.string('description');
+      table.integer('quantity').notNullable().defaultTo(1);
+      table.decimal('price').notNullable();
+      table.integer('customer_id').unsigned().notNullable().references('id').inTable('customers').onDelete('CASCADE');
+      table.integer('invoice_id').unsigned().nullable().references('id').inTable('invoices').onDelete('SET NULL');
+      table.timestamps(true, true);
+    });
+  }
+  
+  // 4. Payments
+  if (!(await db.schema.hasTable('payments'))) {
+    console.log('Creating "payments" table...');
+    await db.schema.createTable('payments', (table) => {
+      table.increments('id').primary();
+      table.decimal('amount').notNullable();
+      table.integer('customer_id').unsigned().notNullable().references('id').inTable('customers').onDelete('CASCADE');
+      table.timestamps(true, true);
+    });
+  }
+  
+  console.log('Database setup checked and completed.');
+}
 
-
-
-// const express = require('express');
-// const mongoose = require('mongoose');
-// const cors = require('cors');
-// const path = require('path');
-// const app = express();
-
-
-// // ✅ Routes
-// const customerRoutes = require('./routes/Customer');
-// const itemRoutes = require('./routes/Item');
-// const invoiceRoutes = require('./routes/Invoice'); // ✅ NEW
-
-// // ✅ Middleware
-// app.use(cors());
-// app.use(express.json());
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// // ✅ MongoDB Connection
-// mongoose.connect('mongodb://localhost:27017/inventoryDB')
-//   .then(() => {
-//     console.log('✅ Connected to MongoDB');
-//     app.listen(5000, () => console.log('🚀 Server running on http://localhost:5000'));
-//   })
-//   .catch(err => {
-//     console.error('❌ MongoDB connection error:', err.message);
-//   });
-
-// // ✅ API Routes
-// app.use('/api/customers', customerRoutes);
-// app.use('/api/items', itemRoutes);
-// app.use('/api/invoices', invoiceRoutes); // ✅ Add invoice API
-
+// یەکەم جار سێرڤەری کار پێ بکە
+app.listen(PORT, async () => {
+  console.log(`✅ سێرڤەرێ لۆکال کار دکەت لسەر http://localhost:${PORT}` );
+  
+  // پاشان، پشتراست بە کو داتابەیس ئامادەیە
+  try {
+    await setupDatabase();
+    console.log('✅ داتابەیس ب سەرکەفتی هاتە ئامادەکرن.');
+  } catch (err) {
+    console.error('❌ خەلەتی د ئامادەکرنا داتابەیسێ دا:', err);
+  }
+});
