@@ -20,6 +20,48 @@ const CustomerDetail = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
 
+
+  //   const fetchData = useCallback(async () => {
+  //   setLoading(true);
+  //   setError(null);
+  //   console.log("--- دەستپێکرنا وەرگرتنا داتایان ---");
+
+  //   try {
+  //     // --- قۆناغا 1: بتنێ موشتەری وەربگرە ---
+  //     console.log("1. داخوازکرنا موشتەری...");
+  //     const customerRes = await api.get(`/customers/${id}`);
+  //     setCustomer(customerRes.data);
+  //     console.log("✅ موشتەری ب سەرکەفتی هات وەرگرتن:", customerRes.data);
+
+  //     // --- قۆناغا 2: بتنێ کەل و پەلان وەربگرە ---
+  //     console.log("2. داخوازکرنا کەل و پەلان...");
+  //     const itemsRes = await api.get(`/items?customerId=${id}`);
+  //     setItems(itemsRes.data);
+  //     console.log("✅ کەل و پەل ب سەرکەفتی هاتن وەرگرتن:", itemsRes.data);
+
+  //     // --- قۆناغا 3: بتنێ پارەدانان وەربگرە ---
+  //     console.log("3. داخوازکرنا پارەدانان...");
+  //     const paymentsRes = await api.get(`/payments?customerId=${id}`);
+  //     setPayments(paymentsRes.data);
+  //     console.log("✅ پارەدان ب سەرکەفتی هاتن وەرگرتن:", paymentsRes.data);
+
+  //     console.log("--- هەمی داتا ب سەرکەفتی هاتن وەرگرتن ---");
+
+  //   } catch (err) {
+  //     console.error('❌❌❌ شکەستن د ئینانا داتایان دا:', err);
+  //     // ئەم دێ پەیاما خەلەتیێ یا راستەقینە نیشان دەین
+  //     if (err.response) {
+  //       console.error('داتایێن خەلەتیێ:', err.response.data);
+  //       setError(`کێشە ژ سێرڤەری: ${err.response.data.message || 'خەلەتیەکا ناڤخۆیی'}`);
+  //     } else {
+  //       setError('کێشە د وەرگرتنا داتایان دا چێبوو. سەیری کۆنسۆلێ بکە.');
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [id]);
+
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);

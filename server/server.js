@@ -1,6 +1,7 @@
+// server/server.js
 const express = require('express');
 const cors = require('cors');
-const db = require('./config/db'); // وەک بەراهیێ، بتنێ db بهێتە وەرگرتن
+const { setupDatabase } = require('./config/db');
 
 const app = express();
 const PORT = 4000;
@@ -8,8 +9,8 @@ const PORT = 4000;
 // Routes
 const customerRoutes = require('./routes/Customer');
 const itemRoutes = require('./routes/Item');
-const invoiceRoutes = require('./routes/Invoice');
 const paymentRoutes = require('./routes/Payment');
+const invoiceRoutes = require('./routes/Invoice');
 
 // Middleware
 app.use(cors());
@@ -18,83 +19,73 @@ app.use(express.json());
 // API Routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/items', itemRoutes);
-app.use('/api/invoices', invoiceRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
-// پەیاما خەلەتیێ یا گشتی
-app.use((err, req, res, next) => {
-  console.error('❌ کێشەیەکا نەچاوەڕێکری روودا:', err.stack);
-  res.status(500).send('Tiştek xelet çû!');
-});
-
-// فەنکشنێ ئامادەکرنا داتابەیسێ ل ڤێرە دهێتە دروستکرن
-async function setupDatabase() {
-  console.log('Checking database schema...');
-  // 1. Customers
-  if (!(await db.schema.hasTable('customers'))) {
-    console.log('Creating "customers" table...');
-    await db.schema.createTable('customers', (table) => {
-      table.increments('id').primary();
-      table.string('bill_number').notNullable().unique();
-      table.string('name').notNullable();
-      table.string('email').unique();
-      table.string('phone');
-      table.string('address');
-      table.timestamps(true, true);
-    });
-  }
-
-  // 2. Invoices
-  if (!(await db.schema.hasTable('invoices'))) {
-    console.log('Creating "invoices" table...');
-    await db.schema.createTable('invoices', (table) => {
-      table.increments('id').primary();
-      table.string('bill_number').notNullable().unique();
-      table.decimal('total_amount').notNullable();
-      table.decimal('paid_amount').defaultTo(0);
-      table.integer('customer_id').unsigned().notNullable().references('id').inTable('customers').onDelete('CASCADE');
-      table.timestamps(true, true);
-    });
-  }
-
-  // 3. Items
-  if (!(await db.schema.hasTable('items'))) {
-    console.log('Creating "items" table...');
-    await db.schema.createTable('items', (table) => {
-      table.increments('id').primary();
-      table.string('name').notNullable();
-      table.string('description');
-      table.integer('quantity').notNullable().defaultTo(1);
-      table.decimal('price').notNullable();
-      table.integer('customer_id').unsigned().notNullable().references('id').inTable('customers').onDelete('CASCADE');
-      table.integer('invoice_id').unsigned().nullable().references('id').inTable('invoices').onDelete('SET NULL');
-      table.timestamps(true, true);
-    });
-  }
-  
-  // 4. Payments
-  if (!(await db.schema.hasTable('payments'))) {
-    console.log('Creating "payments" table...');
-    await db.schema.createTable('payments', (table) => {
-      table.increments('id').primary();
-      table.decimal('amount').notNullable();
-      table.integer('customer_id').unsigned().notNullable().references('id').inTable('customers').onDelete('CASCADE');
-      table.timestamps(true, true);
-    });
-  }
-  
-  console.log('Database setup checked and completed.');
-}
-
-// یەکەم جار سێرڤەری کار پێ بکە
-app.listen(PORT, async () => {
-  console.log(`✅ سێرڤەرێ لۆکال کار دکەت لسەر http://localhost:${PORT}` );
-  
-  // پاشان، پشتراست بە کو داتابەیس ئامادەیە
+// فەنکشنێ سەرەکی
+async function startServer() {
   try {
     await setupDatabase();
     console.log('✅ داتابەیس ب سەرکەفتی هاتە ئامادەکرن.');
+    app.listen(PORT, () => {
+      console.log(`✅ سێرڤەر کار دکەت لسەر http://localhost:${PORT}` );
+    });
   } catch (err) {
-    console.error('❌ خەلەتی د ئامادەکرنا داتابەیسێ دا:', err);
+    console.error('❌ خەلەتی د دەستپێکرنا سێرڤەری دا:', err);
+    process.exit(1);
   }
-});
+}
+
+// =================================================================
+//                    ✅ چارەسەریا کێشەیا 'dev' ✅
+// =================================================================
+// ئەڤە پشتراست دکەت کو ئەگەر فایل ب 'node server/server.js' کار پێ هاتە کرن،
+// سێرڤەر دێ کار کەت.
+if (require.main === module) {
+  startServer();
+}
+// =================================================================
+
+// ✅ ڤێ رێزێ بهێلە دا کو د electron.js دا بهێتە بکارئینان
+module.exports = startServer;
+
+
+
+
+// const express = require('express');
+// const cors = require('cors');
+// const { setupDatabase } = require('./config/db'); // بتنێ setupDatabase بهێتە وەرگرتن
+
+// const app = express();
+// const PORT = 4000;
+
+// // Routes
+// const customerRoutes = require('./routes/Customer');
+// const itemRoutes = require('./routes/Item');
+// // ... (هەمی رۆتێن دی)
+
+// // Middleware
+// app.use(cors());
+// app.use(express.json());
+
+// // API Routes
+// app.use('/api/customers', customerRoutes);
+// app.use('/api/items', itemRoutes);
+// // ...
+
+// // فەنکشنێ سەرەکی
+// async function startServer() {
+//   try {
+//     await setupDatabase(); // یەکەم جار داتابەیسێ ئامادە بکە
+//     console.log('✅ داتابەیس ب سەرکەفتی هاتە ئامادەکرن.');
+    
+//     app.listen(PORT, () => {
+//       console.log(`✅ سێرڤەر کار دکەت لسەر http://localhost:${PORT}` );
+//     });
+//   } catch (err) {
+//     console.error('❌ خەلەتی د دەستپێکرنا سێرڤەری دا:', err);
+//     process.exit(1); // ئەگەر داتابەیس کار نەکەت، سێرڤەری بگرە
+//   }
+// }
+
+// startServer(); // دەست ب هەمی تشتان بکە
